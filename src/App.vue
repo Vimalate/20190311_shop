@@ -8,11 +8,17 @@
 <script>
 //引入底部导航
 import FooterGuid from './components/FooterGuid/FooterGuid.vue'
+// import {reqFoodCategory} from './api'
 export default {
  data() {
   return {
 
   }
+ },
+  mounted() {
+    this.$store.dispatch('getAddress')
+    // const result=await reqFoodCategory()
+    // console.log(result)
  },
  components: {
    FooterGuid

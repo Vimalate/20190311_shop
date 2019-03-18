@@ -4,8 +4,8 @@ import Vue from 'vue'
 import App from './App'
 //引入路由器
 import router from './router/router.js'
-
-Vue.config.productionTip = false
+import store from './store'
+// Vue.config.productionTip = false
 
 /* eslint-disable no-new */
 new Vue({
@@ -13,5 +13,6 @@ new Vue({
   // components: { App },1.0的写法
   render:h=>h(App),
   // template: '<App/>'
-  router
+  router,//用上vue-router 
+  store//用上vuex
 })

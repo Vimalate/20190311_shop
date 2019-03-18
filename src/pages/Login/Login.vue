@@ -1,20 +1,22 @@
 <template>
-
      <section class="loginContainer">
       <div class="loginInner">
         <div class="login_header">
           <h2 class="login_logo">硅谷外卖</h2>
           <div class="login_header_title">
-            <a href="javascript:;" class="on">短信登录</a>
-            <a href="javascript:;">密码登录</a>
+            <a href="javascript:;" :class="{on:loginWay}" @click="loginWay=true">短信登录</a>
+            <a href="javascript:;" :class="{on:!loginWay}" @click="loginWay=false">密码登录</a>
           </div>
         </div>
         <div class="login_content">
-          <form>
-            <div class="on">
+          <form @submit.prevent="login">
+            <div :class="{on:loginWay}">
               <section class="login_message">
-                <input type="tel" maxlength="11" placeholder="手机号">
-                <button disabled="disabled" class="get_verification">获取验证码</button>
+                <input type="tel" maxlength="11" placeholder="手机号" v-model="phone">
+                <button :disabled="!rightPhone" class="get_verification"
+                 :class="{ right_phone:rightPhone }" @click.prevent="getCode">
+                 {{computeTime>0?`已发送${computeTime}s`:'获取验证码'}}
+                 </button>
               </section>
               <section class="login_verification">
                 <input type="tel" maxlength="8" placeholder="验证码">
@@ -24,21 +26,22 @@
                 <a href="javascript:;">《用户服务协议》</a>
               </section>
             </div>
-            <div>
+            <div :class="{on:!loginWay}">
               <section>
                 <section class="login_message">
-                  <input type="tel" maxlength="11" placeholder="手机/邮箱/用户名">
+                  <input type="tel" maxlength="11" placeholder="手机/邮箱/用户名" v-model="name">
                 </section>
                 <section class="login_verification">
-                  <input type="tel" maxlength="8" placeholder="密码">
-                  <div class="switch_button off">
-                    <div class="switch_circle"></div>
-                    <span class="switch_text">...</span>
+                  <input type="text" maxlength="8" placeholder="密码" v-if="showpwd" v-model="pwd">
+                  <input type="password" maxlength="8" placeholder="密码" v-else v-model="pwd">
+                  <div class="switch_button " :class="showpwd?'on':'off'" @click="showpwd=!showpwd">
+                    <div class="switch_circle" :class="{right:showpwd}"></div>
+                    <span class="switch_text">{{showpwd?'显示':''}}</span>
                   </div>
                 </section>
                 <section class="login_message">
-                  <input type="text" maxlength="11" placeholder="验证码">
-                  <img class="get_verification" src="./images/captcha.svg" alt="captcha">
+                  <input type="text" maxlength="11" placeholder="验证码" v-model="captcha">
+                  <img class="get_verification" @click="getCaptcha" src="http://localhost:4000/captcha" alt="captcha">
                 </section>
               </section>
             </div>
@@ -50,19 +53,106 @@
           <i class="iconfont icon-jiantou2"></i>
         </a>
       </div>
+      <AlertTip :alertText="alertText" v-if="alertShow" @closeTip="closeTip"></AlertTip>
     </section>
 
 </template>
 
 <script>
+import AlertTip from '../../components/AlertTip/AlertTip.vue'
+import {reqLoginPwd,reqSendCode,reqLoginSms} from '../../api'
 export default {
  data() {
   return {
-
+    loginWay:true,//true代表短信登录，false代表密码登录
+    phone:'',
+    showpwd:false,//默认密码不可见
+    computeTime:0 ,
+    pwd:'',//密码
+    captcha:'',//图像验证码
+    name:'',//用户名
+    code:'',//手机验证码
+    alertText:'',
+    alertShow:false//是否显示提示框
   }
  },
- components: {
+ computed: {
+   rightPhone(){
+     return /^1[34578]\d{9}$/.test(this.phone)
+   }
+ },
+ methods: {
+   closeTip(){
+     this.alertShow=false
+     this.alertText=''
+   },
+  async getCode(){
+    //  alert('====')
+    if(this.computeTime===0){
+      this.computeTime=30
+      this.setInterId=setInterval(()=>{
+        this.computeTime--
+        if(this.computeTime<=0){//停止计时
+          clearInterval(this.setInterId)
+        }
+        
+      },1000)
+      //发送ajax请求
+     const result=await reqSendCode(this.phone)
+     console.log(this.phone)  
+     if(result.code===1){
+       //失败了，提示，停止倒计时
+       
+       this.showAlert(result.msg)
+       if(this.computeTime){ 
+         this.computeTime=0
+         clearInterval(this.setInterId)
+         this.setInterId=undefined
+       }
+     }
+    }
+    
 
+    
+   },
+   getCaptcha(event){
+     event.target.src="http://localhost:4000/captcha?time"+Date.now()
+   },
+   
+   showAlert(alertText){
+     this.alertShow=true
+     this.alertText=alertText
+   },
+   login(){
+     if(this.loginWay){
+       //短信登录
+       const {phone,rightPhone,code}=this
+      if(!this.rightPhone){
+        //手机号不正确
+        this.showAlert('手机号不正确')
+      }else if(!/^\d{6}$/.test(code)){
+        //短信验证码不正确
+        this.showAlert('短信验证码不正确')
+      }
+     }else{//图形验证登录
+        const {name,captcha,pwd}=this
+        if(!this.name){
+        //必须拥有用户名
+        this.showAlert('必须拥有用户名')
+
+      }else if(!this.pwd){
+        //密码错误
+        this.showAlert('密码错误')
+      }else if(!this.captcha){
+        //图形验证码错误
+        this.showAlert('图形验证码错误')
+      }
+     }
+   },
+   
+ },
+ components: {
+   AlertTip
  }
 }
 </script>
@@ -149,6 +239,10 @@ export default {
                   color: #ccc;
                   font-size: 14px;
                   background: transparent;
+                  &.right_phone{
+                    color:black
+                  }
+                    
                 }
               }
 
@@ -199,6 +293,9 @@ export default {
                     background: #fff;
                     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
                     transition: transform 0.3s;
+                    &.right{
+                      transform translateX(30px)
+                    } 
                   }
                 }
               }
