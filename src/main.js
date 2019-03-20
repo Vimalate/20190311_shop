@@ -5,7 +5,11 @@ import App from './App'
 //引入路由器
 import router from './router/router.js'
 import store from './store'
+import {Button} from 'mint-ui'
+import './mock/mockSever'
 // Vue.config.productionTip = false
+//注册全局组件标签
+Vue.component(Button.name, Button)
 
 /* eslint-disable no-new */
 new Vue({

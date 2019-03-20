@@ -6,6 +6,10 @@ import Profile from '../pages/Profile/Profile.vue'
 import Search from '../pages/Search/Search.vue'
 import Order from '../pages/Order/Order.vue'
 import Login from '../pages/Login/Login.vue'
+import Shop from '../pages/Shop/Shop.vue'
+import ShopInfo from '../pages/Shop/ShopInfo/ShopInfo.vue'
+import ShopGoods from '../pages/Shop/ShopGoods/ShopGoods.vue'
+import ShopRatings from '../pages/Shop/ShopRatings/ShopRatings.vue'
 Vue.use(VueRouter)
 export default new VueRouter ({
     routes:[
@@ -44,6 +48,29 @@ export default new VueRouter ({
             meta:{
                 showFooterGuild:true
             }
+        },
+        {
+            path:'/shop',
+            component:Shop,
+            children:[
+                {
+                    path:'/shop/info',
+                    component:ShopInfo,
+                },
+                {
+                    path:'/shop/ratings',
+                    component:ShopRatings,
+                },
+                {
+                    path:'/shop/goods',
+                    component:ShopGoods,
+                    
+                },
+                {
+                    path:'',
+                    redirect:'/shop/goods'
+                },
+            ]
         },
     ]
 })

@@ -41,7 +41,7 @@
                 </section>
                 <section class="login_message">
                   <input type="text" maxlength="11" placeholder="验证码" v-model="captcha">
-                  <img class="get_verification" @click="getCaptcha" src="http://localhost:4000/captcha" alt="captcha">
+                  <img class="get_verification" @click="getCaptcha" src="http://localhost:4000/captcha" alt="captcha" ref="captcha">
                 </section>
               </section>
             </div>
@@ -115,39 +115,69 @@ export default {
 
     
    },
-   getCaptcha(event){
-     event.target.src="http://localhost:4000/captcha?time"+Date.now()
+   getCaptcha(){
+     this.$refs.captcha.src="http://localhost:4000/captcha?time"+Date.now()
    },
    
    showAlert(alertText){
      this.alertShow=true
      this.alertText=alertText
    },
-   login(){
+  async login(){
+    let result
      if(this.loginWay){
        //短信登录
        const {phone,rightPhone,code}=this
       if(!this.rightPhone){
         //手机号不正确
         this.showAlert('手机号不正确')
+        return
       }else if(!/^\d{6}$/.test(code)){
         //短信验证码不正确
         this.showAlert('短信验证码不正确')
+        return
       }
+      //发送ajax请求短信登录
+         result=await reqLoginSms(phone,code)
+
      }else{//图形验证登录
         const {name,captcha,pwd}=this
         if(!this.name){
         //必须拥有用户名
         this.showAlert('必须拥有用户名')
+        return
 
       }else if(!this.pwd){
         //密码错误
         this.showAlert('密码错误')
+        return
       }else if(!this.captcha){
         //图形验证码错误
         this.showAlert('图形验证码错误')
+        return
       }
+      //发送ajax请求密码登录
+        result=await reqLoginPwd({name,pwd,captcha})
      }
+      //停止计时器
+        if(this.computeTime){ 
+         this.computeTime=0
+         clearInterval(this.setInterId)
+         this.setInterId=undefined
+       }
+
+        //根据结果数据处理
+        if(result.code===0){
+          const user=result.data
+          //将user保存到vuex中
+          this.$store.dispatch('save',user)
+          //跳转到个人中心界面
+          this.$router.replace('/Profile')
+        }else{
+          const msg=result.msg
+          this.getCaptcha()
+          this.showAlert(msg)
+        }
    },
    
  },

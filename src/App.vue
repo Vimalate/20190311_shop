@@ -8,6 +8,7 @@
 <script>
 //引入底部导航
 import FooterGuid from './components/FooterGuid/FooterGuid.vue'
+import {mapActions} from 'vuex'
 // import {reqFoodCategory} from './api'
 export default {
  data() {
@@ -15,10 +16,15 @@ export default {
 
   }
  },
+ 
   mounted() {
-    this.$store.dispatch('getAddress')
+    this.getAddress()
+    this.getUserInfo()
     // const result=await reqFoodCategory()
     // console.log(result)
+ },
+ methods: {
+   ...mapActions(['getAddress', 'getUserInfo'])
  },
  components: {
    FooterGuid
